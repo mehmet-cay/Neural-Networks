@@ -1,0 +1,67 @@
+---
+title: "Neural_Networks"
+author: "Mehmet ÇAY"
+date: "2022-09-23"
+output: 
+  html_document: 
+    toc: yes
+    highlight: zenburn
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Neural_Networks
+Basically neural networks work like our neurons. They connect each others and have multiple linear connections between them (that is actullay not right. I am just trying to tell easily. What I am going to say is valid for backpropagation algorithm.) For more information, please check [here](https://www.javatpoint.com/artificial-neural-network)
+ 
+```{r}
+library(neuralnet)
+
+heart <- read.csv("C:/Users/Mehmet ÇAY/Desktop/R/Regressions/Regressions/heart.csv")
+
+heart <- na.omit(heart)
+heart$TenYearCHD <- as.factor(heart$TenYearCHD)
+
+library(caret)
+datasScale <- preProcess(heart,method=c("center","scale")) #scaling process for neural networks
+heart2 <- predict(datasScale,heart)
+
+set.seed(502)
+trainIndex <- sample(1:nrow(heart2),size=0.8*nrow(heart2))
+
+trainSet <- heart2[trainIndex,]
+testSet <- heart2[-trainIndex,]
+
+```
+Data is ready for application.
+```{r}
+model1 <- neuralnet(TenYearCHD ~ .,data=trainSet,
+                    hidden=3,
+                    threshold = 0.08,
+                    rep=2,
+                    act.fct = "logistic",
+                    linear.output = FALSE)
+
+model2 <- neuralnet(TenYearCHD ~ .,data=trainSet,
+                    hidden=c(2,2),
+                    threshold = 0.07,
+                    rep=2,
+                    act.fct = "logistic",
+                    linear.output = FALSE)
+
+```
+Knowing perfect number of hidden layers and neurons is quite impossible. That is why we made more than one model. We are going to test all of them and chose best one.
+```{r}
+predModel1 <- predict(model1,testSet)
+predModel1C <- ifelse(apply(predModel1 , 1 , which.max) == 1 , "0" , "1")
+predModel2 <- predict(model2,testSet)
+predModel2C <- ifelse(apply(predModel2 , 1 , which.max) == 1 , "0" , "1")
+
+library(caret)
+confusionMatrix(as.factor(predModel1C) , testSet$TenYearCHD)
+confusionMatrix(as.factor(predModel2C) , testSet$TenYearCHD)
+
+
+```
+
